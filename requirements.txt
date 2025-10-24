@@ -1,0 +1,5 @@
+python-decouple
+pypdf
+langchain
+langchain-openai
+langchain-text-splitters
