@@ -44,14 +44,12 @@ Orientações específicas:
 - "nome do cliente": geralmente aparece após "PAGADOR" ou destacado próximo ao endereço do cliente.
 - "codigo do cliente - uc": normalize para o formato "10/########-#". Prefira valores já com "10/" na fatura (ex.: "10/33525227-0"). Se só houver versões fragmentadas (ex.: "3352527-2025-9-6"), reconstrua removendo sufixos extras e aplicando o prefixo "10/" com o dígito verificador mais plausível.
 - "consumo kwh" está no campo Quant. ao lado de Unit. kWh. Ele será encontrado em itens da fatura
-- "historico de consumo": extraia pares de mês e consumo da seção de 13 meses ou da lista "Consumo kWh".
+- "historico de consumo": extraia pares de mês e consumo da seção CONSUMO DOS ÚLTIMOS 13 meses ou da lista "Consumo FATURADO".
   Quando números e meses estiverem em colunas diferentes, faça a correspondência
   usando proximidade e ordem: valores mais recentes devem ser ligados aos meses mais recentes
   e meses sem valor claramente identificado devem receber "".
-  Exemplo prático: se a região mostrar os números "162,00" e "365,00" junto aos meses
-  "JUL/25" e "AGO/25", associe "JUL/25" → "162,00" e "AGO/25" → "365,00".
 - "preco unit com tributos": busque o valor decimal da coluna "Preço unit (R$) com tributos" como valor aproximado de 1,099590.
-- "Energia Atv Injetada": identifique todas as linhas de energia ativa injetada (Energia Atv Injetada), ela está em itens da fatura, e some as quantidades em kWh (coluna "Quant."). Remova sinais negativos, normalize para o formato brasileiro e desconsidere valores que não estejam explicitamente ligados à energia injetada.
+- "Energia Atv Injetada": identifique todas as linhas de energia ativa injetada (Energia Atv Injetada), ela está em itens da fatura, e some as quantidades e divida pelo preco unit com tributos. Remova sinais negativos, normalize para o formato brasileiro e desconsidere valores que não estejam explicitamente ligados à energia injetada.
 - "valor a pagar": calcule como `valor_a_pagar = energia_injetada_total_kwh * preco_unit_com_tributos * 0.7`. Se qualquer um desses valores estiver ausente.
 - "Economia":  Calcule `Economia = Energia Atv Injetada em kWh * preco unit com tributos * 0.3`. Formate com vírgula e duas casas decimais; se não encontrar os componentes necessários, retorne "".
 
