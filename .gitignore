@@ -12,3 +12,4 @@ venv/
 .vscode/
 .env
 .venv
+.pdfs
