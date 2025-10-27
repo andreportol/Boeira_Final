@@ -71,7 +71,7 @@ Regras importantes:
 10. "codigo do cliente - uc" deve sempre começar com "10/" e ter apenas um hífen final para o dígito verificador (ex.: "10/33525227-0").
 11. Antes de realizar cálculos, converta os valores extraídos para números (substituindo vírgula por ponto), execute as operações e depois formate novamente com vírgula e duas casas decimais.
 12. Ao calcular "valor a pagar" e "Economia", mantenha o resultado com duas casas decimais e formato brasileiro.
-
+13. A Energia Atv Injetada estará com sinal negativo no PDF; Some todos e converta para positivo antes de usar nos cálculos.
 Texto a ser analisado:
 ----------------------
 {{ text_pdf }}
