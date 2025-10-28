@@ -54,4 +54,5 @@ ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 # Comando para iniciar o Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=$PORT", "--server.address=0.0.0.0"]
+CMD sh -c "streamlit run app.py --server.port=\$PORT --server.address=0.0.0.0"
+

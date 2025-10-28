@@ -9,6 +9,10 @@ from ui_theme import inject_global_styles
 # ========================================
 # CONFIGURAÇÕES GERAIS
 # ========================================
+
+import os
+port = int(os.environ.get("PORT", 8501))
+
 st.set_page_config(
     page_title="Boeira | Leitor de Faturas",
     page_icon="⚡",
