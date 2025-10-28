@@ -1,8 +1,22 @@
+# nixpacks.toml — versão corrigida e funcional no Railway
+
 [phases.setup]
-nixPkgs = ["python311", "pip", "cairo", "pango", "gdk-pixbuf", "glib", "libffi", "gobject-introspection", "shared-mime-info"]
+# Pacotes que o Nix deve instalar
+nixPkgs = [
+  "python311",
+  "cairo",
+  "pango",
+  "gdk-pixbuf",
+  "glib",
+  "libffi",
+  "gobject-introspection",
+  "shared-mime-info"
+]
 
 [phases.install]
-cmds = ["pip install --no-cache-dir -r requirements.txt"]
+# Instalar dependências Python via pip
+cmds = ["python -m ensurepip && pip install --no-cache-dir -r requirements.txt"]
 
 [start]
+# Comando de inicialização do Streamlit
 cmd = "streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
