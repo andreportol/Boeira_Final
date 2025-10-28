@@ -1,7 +1,6 @@
-# nixpacks.toml — configuração estável e compatível com Railway
+# nixpacks.toml — configuração estável para Railway + Streamlit + WeasyPrint
 
 [phases.setup]
-# Instala pacotes necessários via Nix (sem apt-get)
 nixPkgs = [
   "python311Full",
   "cairo",
@@ -14,9 +13,9 @@ nixPkgs = [
 ]
 
 [phases.install]
-# Instala as dependências do projeto com o pip embutido do Python
-cmds = ["pip install --no-cache-dir -r requirements.txt"]
+# Usamos o Python diretamente para chamar o pip embutido
+cmds = ["python3 -m pip install --no-cache-dir -r requirements.txt"]
 
 [start]
-# Comando de inicialização do Streamlit
-cmd = "streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
+# Executa o Streamlit
+cmd = "python3 -m streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
