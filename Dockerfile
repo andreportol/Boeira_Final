@@ -45,10 +45,11 @@ WORKDIR /app
 COPY --from=builder /usr/local /usr/local
 COPY . .
 
-# Expõe a porta padrão do Streamlit
+# Exponha a porta padrão (opcional)
 EXPOSE 8501
 ENV PYTHONUNBUFFERED=1
 
+# Deixe o Python controlar a porta dinamicamente
 CMD ["python", "app.py"]
 
 
