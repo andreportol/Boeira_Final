@@ -3,3 +3,6 @@ pdfplumber
 langchain
 langchain-openai
 pydantic
+jinja2
+streamlit
+weasyprint

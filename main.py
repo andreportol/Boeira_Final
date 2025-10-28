@@ -1,25 +1,54 @@
-from typing import Union
+from __future__ import annotations
 
-from decouple import config
-from pypdf import PdfReader
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_core.documents import Document
-from langchain_core.prompts import PromptTemplate
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+import json
 from pathlib import Path
+from typing import IO, List, Union
+
+import pdfplumber
+from decouple import config
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 # ========================================
 # CONFIGURAÇÕES
 # ========================================
-OPENAI_API_KEY = config("OPENAI_API_KEY")  # Carrega do .env
+OPENAI_API_KEY = config("OPENAI_API_KEY")
 
 # Inicializa modelo LLM
-llm = ChatOpenAI(model="gpt-5", api_key=OPENAI_API_KEY)
+llm = ChatOpenAI(model="gpt-5", api_key=OPENAI_API_KEY, temperature=0)
 
-# Inicializa embeddings
-embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
 
-# Prompt template
+# ========================================
+# SCHEMA DE VALIDAÇÃO
+# ========================================
+class HistoricoItem(BaseModel):
+    mes: str = Field(default="")
+    consumo: str = Field(default="")
+
+
+class FaturaSchema(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    nome_do_cliente: str = Field(default="", alias="nome do cliente")
+    data_de_emissao: str = Field(default="", alias="data de emissao")
+    data_de_vencimento: str = Field(default="", alias="data de vencimento")
+    codigo_do_cliente_uc: str = Field(default="", alias="codigo do cliente - uc")
+    mes_de_referencia: str = Field(default="", alias="mes de referencia")
+    consumo_kwh: str = Field(default="", alias="consumo kwh")
+    valor_a_pagar: str = Field(default="", alias="valor a pagar")
+    economia: str = Field(default="", alias="Economia")
+    historico_de_consumo: List[HistoricoItem] = Field(
+        default_factory=list, alias="historico de consumo"
+    )
+    saldo_acumulado: str = Field(default="", alias="saldo acumulado")
+    preco_unit_com_tributos: str = Field(default="", alias="preco unit com tributos")
+    energia_atv_injetada: str = Field(default="", alias="Energia Atv Injetada")
+
+
+# ========================================
+# PROMPT TEMPLATE
+# ========================================
 PROMPT_TEMPLATE = PromptTemplate.from_template(
     """Você é um assistente especializado em leitura de faturas de energia elétrica.
 Receberá abaixo o TEXTO EXTRAÍDO DE UM PDF (pode conter ruídos, quebras e colunas desordenadas).
@@ -78,43 +107,70 @@ Texto a ser analisado:
     template_format="jinja2",
 )
 
-# ========================================
-# FUNÇÃO: Ler PDF
-# ========================================
-def ler_pdf(caminho_pdf: Union[str, Path]) -> str:
-    """Extrai texto de um arquivo PDF"""
-    leitor = PdfReader(caminho_pdf)
-    texto = ""
-    for pagina in leitor.pages:
-        texto += pagina.extract_text() + "\n"
-    return texto
 
 # ========================================
-# MAIN
+# FUNÇÕES PRINCIPAIS
+# ========================================
+def ler_pdf(caminho_pdf: Union[str, Path, IO[bytes]]) -> str:
+    """Extrai texto de um PDF usando pdfplumber, preservando melhor a estrutura."""
+    if hasattr(caminho_pdf, "seek"):
+        caminho_pdf.seek(0)
+
+    partes = []
+    with pdfplumber.open(caminho_pdf) as pdf:
+        for pagina in pdf.pages:
+            texto = (pagina.extract_text() or "").strip()
+            if texto:
+                partes.append(texto)
+    return "\n\n".join(partes)
+
+
+def extrair_dados(texto_pdf: str) -> dict:
+    """Envia o texto do PDF ao LLM e retorna o JSON estruturado validado."""
+    prompt = PROMPT_TEMPLATE.format(text_pdf=texto_pdf)
+    resposta = llm.invoke(prompt)
+
+    try:
+        dados_raw = json.loads(resposta.content)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Resposta do LLM não é JSON válido: {exc.msg}") from exc
+
+    try:
+        resultado = FaturaSchema.model_validate(dados_raw)
+    except ValidationError as exc:
+        raise ValueError(
+            f"JSON recebido não corresponde ao schema esperado: {exc}"
+        ) from exc
+
+    return resultado.model_dump(by_alias=True)
+
+
+def processar_pdf(caminho_pdf: Union[str, Path, IO[bytes]]) -> dict:
+    """Extrai texto do PDF e retorna o dicionário estruturado com os dados da fatura."""
+    texto = ler_pdf(caminho_pdf)
+    if not texto.strip():
+        raise ValueError("Nenhum texto foi extraído do PDF.")
+    return extrair_dados(texto)
+
+
+# ========================================
+# EXECUÇÃO DIRETA
 # ========================================
 if __name__ == "__main__":
-    base_dir = Path(__file__).resolve().parent
-    pdf_path = base_dir / "pdfs" / "exemplo.pdf"  # Caminho do PDF
-
+    pdf_path = Path(__file__).resolve().parent / "pdfs" / "exemplo.pdf"
     if not pdf_path.exists():
         raise FileNotFoundError(
             f"Arquivo não encontrado em {pdf_path}. Coloque o PDF esperado ou ajuste o caminho."
         )
-    texto = ler_pdf(pdf_path)
 
+    texto_extraido = ler_pdf(pdf_path)
     print("=== TEXTO EXTRAÍDO DO PDF ===")
-    print(texto)
+    print(texto_extraido)
 
-    # Quebra o texto em chunks para embeddings
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=300)
-    documentos = [Document(page_content=chunk) for chunk in splitter.split_text(texto)]
-
-    # Gera embeddings
-    vetores = embeddings.embed_documents([doc.page_content for doc in documentos])
-    print(f"\nEmbeddings gerados para {len(vetores)} chunks de texto.")
-
-    # Gera prompt estruturado e envia ao LLM
-    prompt = PROMPT_TEMPLATE.format(text_pdf=texto)
-    resposta = llm.invoke(prompt)
-    print("\n=== RESPOSTA DO LLM ===")
-    print(resposta.content)
+    try:
+        dados_fatura = extrair_dados(texto_extraido)
+    except ValueError as erro:
+        print("Erro ao interpretar resposta:", erro)
+    else:
+        print("\n=== JSON FINAL ===")
+        print(json.dumps(dados_fatura, indent=2, ensure_ascii=False))
