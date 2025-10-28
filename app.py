@@ -10,9 +10,6 @@ from ui_theme import inject_global_styles
 # CONFIGURAÇÕES GERAIS
 # ========================================
 
-import os
-port = int(os.environ.get("PORT", 8501))
-
 st.set_page_config(
     page_title="Boeira | Leitor de Faturas",
     page_icon="⚡",
@@ -132,25 +129,19 @@ def render_login() -> None:
             if st.session_state.login_error:
                 st.error(st.session_state.login_error)
         else:
-            st.session_state.login_error = ""          
+            st.session_state.login_error = ""
         st.markdown("</div>", unsafe_allow_html=True)
 
-import os
-import sys
-import streamlit.web.cli as stcli
+def main() -> None:
+    ensure_session_defaults()
+
+    if st.session_state.authenticated:
+        st.switch_page("pages/portal.py")
+        return
+
+    render_login()
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8501))
-    sys.argv = [
-        "streamlit",
-        "run",
-        "app.py",
-        "--server.port",
-        str(port),
-        "--server.address",
-        "0.0.0.0",
-    ]
-    sys.exit(stcli.main())
-
-
+    main()
 
