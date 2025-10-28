@@ -1,9 +1,9 @@
-# nixpacks.toml — versão corrigida e funcional no Railway
+# nixpacks.toml — configuração estável e compatível com Railway
 
 [phases.setup]
-# Pacotes que o Nix deve instalar
+# Instala pacotes necessários via Nix (sem apt-get)
 nixPkgs = [
-  "python311",
+  "python311Full",
   "cairo",
   "pango",
   "gdk-pixbuf",
@@ -14,8 +14,8 @@ nixPkgs = [
 ]
 
 [phases.install]
-# Instalar dependências Python via pip
-cmds = ["python -m ensurepip && pip install --no-cache-dir -r requirements.txt"]
+# Instala as dependências do projeto com o pip embutido do Python
+cmds = ["pip install --no-cache-dir -r requirements.txt"]
 
 [start]
 # Comando de inicialização do Streamlit
