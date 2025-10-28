@@ -1,21 +1,23 @@
+# nixpacks.toml — Configuração correta para Railway com Python + Streamlit + WeasyPrint
+
 [phases.setup]
-aptPkgs = [
-  "libcairo2",
-  "libpango-1.0-0",
-  "libpangocairo-1.0-0",
-  "libgdk-pixbuf2.0-0",
-  "libglib2.0-0",
-  "libgobject-2.0-0",
-  "libffi-dev",
-  "shared-mime-info",
-  "build-essential"
+# Pacotes do sistema instalados via Nix (não via apt)
+nixPkgs = [
+  "python311",
+  "pip",
+  "cairo",
+  "pango",
+  "gdk-pixbuf",
+  "glib",
+  "libffi",
+  "gobject-introspection",
+  "shared-mime-info"
 ]
 
 [phases.install]
-commands = [
-  "apt-get update && apt-get install -y libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libglib2.0-0 libgirepository-1.0-1 gobject-introspection libffi-dev shared-mime-info build-essential",
-  "python -m pip install --no-cache-dir -r requirements.txt"
-]
+# Instala as dependências Python
+cmds = ["pip install --no-cache-dir -r requirements.txt"]
 
 [start]
+# Comando de inicialização do Streamlit
 cmd = "streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
