@@ -45,11 +45,12 @@ WORKDIR /app
 COPY --from=builder /usr/local /usr/local
 COPY . .
 
-# Exponha a porta padrão (opcional)
 EXPOSE 8501
 ENV PYTHONUNBUFFERED=1
 
-# Deixe o Python controlar a porta dinamicamente
+# ⚠️ Não rode o streamlit diretamente!
+# O app.py decide a porta correta (PORT do Railway)
 CMD ["python", "app.py"]
+
 
 
