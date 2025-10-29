@@ -29,10 +29,4 @@ COPY . .
 
 EXPOSE 8501
 
-# Remove variáveis injetadas incorretamente pelo Railway
-ENV STREAMLIT_SERVER_PORT=8501
-
-# ✅ Importante: dá permissão de execução ao entrypoint
-RUN chmod +x /app/docker-entrypoint.sh
-
-ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint.sh"]
+CMD ["python", "start.py"]
